@@ -1,5 +1,5 @@
 {
-  "name": "asn1.js",
+  "name": "asn1_js",
   "version": "5.4.1",
   "description": "ASN.1 encoder and decoder",
   "main": "lib/asn1.js",
@@ -11,7 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:indutny/asn1.js"
+    "url": "git@github.com:normano/asn1_js"
   },
   "keywords": [
     "asn.1",
