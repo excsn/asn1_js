@@ -3,6 +3,10 @@
   "version": "5.4.1",
   "description": "ASN.1 encoder and decoder",
   "main": "lib/asn1.js",
+  "exports": {
+    ".": "./lib/asn1.js",
+    "./*": "./lib/asn1/*.js"
+  },
   "scripts": {
     "lint-2560": "eslint --fix rfc/2560/*.js rfc/2560/test/*.js",
     "lint-5280": "eslint --fix rfc/5280/*.js rfc/5280/test/*.js",
