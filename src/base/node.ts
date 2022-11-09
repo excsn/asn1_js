@@ -1,0 +1,311 @@
+import assert from "minimalistic-assert";
+
+import { Entity } from "../api.js";
+import { convertStringToNumberOrZero } from "../constants/index.js";
+
+// Supported tags
+export const tags = [
+  'seq', 'seqof', 'set', 'setof', 'objid', 'bool',
+  'gentime', 'utctime', 'null_', 'enum', 'int', 'objDesc',
+  'bitstr', 'bmpstr', 'charstr', 'genstr', 'graphstr', 'ia5str', 'iso646str',
+  'numstr', 'octstr', 'printstr', 't61str', 'unistr', 'utf8str', 'videostr'
+];
+
+// Public methods list
+export const methods = [
+  'key', 'obj', 'use', 'optional', 'explicit', 'implicit', 'def', 'choice',
+  'any', 'contains'
+].concat(tags);
+
+// Overrided methods list
+export const overrided = [
+  '_peekTag', '_decodeTag', '_use',
+  '_decodeStr', '_decodeObjid', '_decodeTime',
+  '_decodeNull', '_decodeInt', '_decodeBool', '_decodeList',
+
+  '_encodeComposite', '_encodeStr', '_encodeObjid', '_encodeTime',
+  '_encodeNull', '_encodeInt', '_encodeBool'
+];
+
+export const stateProps: (keyof NodeState)[] = [
+  'enc', 'parent', 'children', 'tag', 'args', 'reverseArgs', 'choice',
+  'optional', 'any', 'obj', 'use', 'key', 'default', 'explicit',
+  'implicit', 'contains'
+];
+
+export interface NodeState {
+  name?: string;
+  enc: string;
+  parent: Node | null;
+  children: any[];
+  tag: any;
+  args: any;
+  reverseArgs: any;
+  choice: any;
+  optional: boolean;
+  any: boolean;
+  obj: boolean;
+  use: any;
+  useDecoder: any;
+  key: any;
+  default: any;
+  explicit: any;
+  implicit: any;
+  contains: any;
+  defaultBuffer: any;
+}
+
+export abstract class Node {
+
+  _baseState: NodeState;
+
+  constructor(enc: string | NodeState, parent?: Node | null, name?: string) {
+
+    if(!(typeof enc === "string")) {
+      this._baseState = enc;
+      return;
+    }
+
+    const state: NodeState = {
+      name,
+      enc,
+      parent: parent || null,
+      children: null as any,
+      tag: null,
+      args: null,
+      reverseArgs: null,
+      choice: null,
+      optional: false,
+      any: false,
+      obj: false,
+      use: null,
+      useDecoder: null,
+      key: null,
+      default: null,
+      explicit: null,
+      implicit: null,
+      contains: null,
+      defaultBuffer: undefined,
+    };
+
+    this._baseState = state;
+
+    // Should create new instance on each method
+    if (!parent) {
+      state.children = [];
+      this._wrap();
+    }
+
+    //
+    // Overrided methods
+    //
+
+    overrided.forEach((method) => {
+      (this as any)[method] = function _overrided() {
+        const state = this._baseState;
+        throw new Error(method + ' not implemented for encoding: ' + state.enc);
+      };
+    });
+    
+    tags.forEach((tag) => {
+      (this as any)[tag] = function _tagMethod() {
+        const state = this._baseState;
+        const args = Array.prototype.slice.call(arguments);
+    
+        assert(state.tag === null);
+        state.tag = tag;
+    
+        this._useArgs(args);
+    
+        return this;
+      };
+    });
+  }
+
+  abstract clone(): any;
+
+  _wrap() {
+    const state = this._baseState;
+    methods.forEach((method) => {
+      (this as any)[method] = function _wrappedMethod() {
+        const clone = new this.constructor(this);
+        state.children.push(clone);
+        return clone[method].apply(clone, arguments);
+      };
+    }, this);
+  }
+
+  _init(body: Function) {
+    const state = this._baseState;
+  
+    assert(state.parent === null);
+    body.call(this);
+  
+    // Filter children
+    state.children = state.children.filter((child) => {
+      return child._baseState.parent === this;
+    }, this);
+    assert.equal(state.children.length, 1, 'Root node can have only one child');
+  }
+
+  _useArgs(args: any[]) {
+    const state = this._baseState;
+  
+    // Filter children and args
+    const children = args.filter((arg) => {
+      return arg instanceof this.constructor;
+    }, this);
+    args = args.filter((arg) => {
+      return !(arg instanceof this.constructor);
+    }, this);
+  
+    if (children.length !== 0) {
+      assert(state.children === null);
+      state.children = children;
+  
+      // Replace parent to maintain backward link
+      children.forEach((child) => {
+        child._baseState.parent = this;
+      }, this);
+    }
+    if (args.length !== 0) {
+      assert(state.args === null);
+      state.args = args;
+      state.reverseArgs = args.map(function(arg) {
+        if (typeof arg !== 'object' || arg.constructor !== Object) {
+          return arg;
+        }
+  
+        const res: any = {};
+
+        //TODO: Wtf is this?
+        Object.keys(arg).forEach(function(key: any) {
+          
+          const newKey = convertStringToNumberOrZero(key);
+
+          const value = arg[newKey];
+          res[value] = newKey;
+        });
+        return res;
+      });
+    }
+  }
+  
+  use(item: any) {
+    assert(item);
+    const state = this._baseState;
+  
+    assert(state.use === null);
+    state.use = item;
+  
+    return this;
+  }
+  
+  optional() {
+    const state = this._baseState;
+  
+    state.optional = true;
+  
+    return this;
+  }
+  
+  def(val: any) {
+    const state = this._baseState;
+  
+    assert(state['default'] === null);
+    state['default'] = val;
+    state.optional = true;
+  
+    return this;
+  }
+  
+  explicit(num: any) {
+    const state = this._baseState;
+  
+    assert(state.explicit === null && state.implicit === null);
+    state.explicit = num;
+  
+    return this;
+  }
+  
+  implicit(num: any) {
+    const state = this._baseState;
+  
+    assert(state.explicit === null && state.implicit === null);
+    state.implicit = num;
+  
+    return this;
+  }
+  
+  obj() {
+    const state = this._baseState;
+    const args = Array.prototype.slice.call(arguments);
+  
+    state.obj = true;
+  
+    if (args.length !== 0)
+      this._useArgs(args);
+  
+    return this;
+  }
+  
+  key(newKey: any) {
+    const state = this._baseState;
+  
+    assert(state.key === null);
+    state.key = newKey;
+  
+    return this;
+  }
+  
+  any() {
+    const state = this._baseState;
+  
+    state.any = true;
+  
+    return this;
+  }
+  
+  choice(obj: any) {
+    const state = this._baseState;
+  
+    assert(state.choice === null);
+    state.choice = obj;
+    this._useArgs(Object.values(obj));
+  
+    return this;
+  }
+  
+  contains(item: any) {
+    const state = this._baseState;
+  
+    assert(state.use === null);
+    state.contains = item;
+  
+    return this;
+  }
+
+  abstract _use(entity: Entity, obj: any): any;
+  
+  _getUse(entity: Entity, obj: any) {
+  
+    const state = this._baseState;
+    // Create altered use decoder if implicit is set
+    state.useDecoder = this._use(entity, obj);
+    assert(state.useDecoder._baseState.parent === null);
+    state.useDecoder = state.useDecoder._baseState.children[0];
+    if (state.implicit !== state.useDecoder._baseState.implicit) {
+      state.useDecoder = state.useDecoder.clone();
+      state.useDecoder._baseState.implicit = state.implicit;
+    }
+    return state.useDecoder;
+  }
+
+  _isNumstr(str: string): boolean {
+    return /^[0-9 ]*$/.test(str);
+  }
+  
+  _isPrintstr(str: string): boolean {
+    return /^[A-Za-z0-9 '()+,-./:=?]*$/.test(str);
+  }
+}

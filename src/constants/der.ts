@@ -1,30 +1,16 @@
-'use strict';
+import { reverse } from "./index.js";
 
 // Helper
-function reverse(map) {
-  const res = {};
-
-  Object.keys(map).forEach(function(key) {
-    // Convert key to integer if it is stringified
-    if ((key | 0) == key)
-      key = key | 0;
-
-    const value = map[key];
-    res[value] = key;
-  });
-
-  return res;
-}
-
-exports.tagClass = {
+export const tagClass: Record<number, string> = {
   0: 'universal',
   1: 'application',
   2: 'context',
   3: 'private'
 };
-exports.tagClassByName = reverse(exports.tagClass);
 
-exports.tag = {
+export const tagClassByName = reverse(exports.tagClass);
+
+export const tag: Record<number, string>  = {
   0x00: 'end',
   0x01: 'bool',
   0x02: 'int',
@@ -55,4 +41,5 @@ exports.tag = {
   0x1d: 'charstr',
   0x1e: 'bmpstr'
 };
-exports.tagByName = reverse(exports.tag);
+
+export const tagByName = reverse(exports.tag);
