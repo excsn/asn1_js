@@ -497,6 +497,7 @@ export class DERNode extends Node {
     });
 
     const res = new DERNode(this);
+    res._baseState = cstate;
     
     return res;
   }

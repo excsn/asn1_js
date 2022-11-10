@@ -59,12 +59,7 @@ export abstract class Node {
 
   _baseState: NodeState;
 
-  constructor(enc: string | NodeState, parent?: Node | null, name?: string) {
-
-    if(!(typeof enc === "string")) {
-      this._baseState = enc;
-      return;
-    }
+  constructor(enc: string, parent?: Node | null, name?: string) {
 
     const state: NodeState = {
       name,
@@ -89,23 +84,6 @@ export abstract class Node {
     };
 
     this._baseState = state;
-
-    // Should create new instance on each method
-    if (!parent) {
-      state.children = [];
-      this._wrap();
-    }
-
-    //
-    // Overrided methods
-    //
-
-    overrided.forEach((method) => {
-      (this as any)[method] = function _overrided() {
-        const state = this._baseState;
-        throw new Error(method + ' not implemented for encoding: ' + state.enc);
-      };
-    });
     
     tags.forEach((tag) => {
       (this as any)[tag] = function _tagMethod() {
@@ -120,13 +98,19 @@ export abstract class Node {
         return this;
       };
     });
+
+    // Should create new instance on each method
+    if (!parent) {
+      state.children = [];
+      this._wrap();
+    }
   }
 
   abstract clone(): any;
 
   _wrap() {
     const state = this._baseState;
-    methods.forEach((method) => {
+    methods.forEach(function (this: any, method) {
       (this as any)[method] = function _wrappedMethod() {
         const clone = new this.constructor(this);
         state.children.push(clone);
