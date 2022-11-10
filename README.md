@@ -1,15 +1,18 @@
-# ASN1.js
+# ASN1 JS
 
 ASN.1 DER Encoder/Decoder and DSL.
 
+Fork of "asn1.js" ported to typescript.
+
 ## Example
 
-Define model:
+Define ASN model:
 
 ```javascript
-var asn = require('asn1.js');
+import { Entity } from "@excsn/asn1/api";
+import { Node } from "@excsn/asn1/base/node";
 
-var Human = asn.define('Human', function() {
+const Human = new Entity('Human', function(this: Node) {
   this.seq().obj(
     this.key('firstName').octstr(),
     this.key('lastName').octstr(),
@@ -19,7 +22,7 @@ var Human = asn.define('Human', function() {
   );
 });
 
-var Bio = asn.define('Bio', function() {
+const Bio = new Entity('Bio', function(this: Node) {
   this.seq().obj(
     this.key('time').gentime(),
     this.key('description').octstr()
@@ -30,7 +33,7 @@ var Bio = asn.define('Bio', function() {
 Encode data:
 
 ```javascript
-var output = Human.encode({
+const output = Human.encode({
   firstName: 'Thomas',
   lastName: 'Anderson',
   age: 28,
@@ -47,7 +50,7 @@ var output = Human.encode({
 Decode data:
 
 ```javascript
-var human = Human.decode(output, 'der');
+const human = Human.decode(output, 'der');
 console.log(human);
 /*
 { firstName: <Buffer 54 68 6f 6d 61 73>,
@@ -66,7 +69,7 @@ Its possible to parse data without stopping on first error. In order to do it,
 you should call:
 
 ```javascript
-var human = Human.decode(output, 'der', { partial: true });
+const human = Human.decode(output, 'der', { partial: true });
 console.log(human);
 /*
 { result: { ... },

@@ -9,13 +9,13 @@ export const tags = [
   'gentime', 'utctime', 'null_', 'enum', 'int', 'objDesc',
   'bitstr', 'bmpstr', 'charstr', 'genstr', 'graphstr', 'ia5str', 'iso646str',
   'numstr', 'octstr', 'printstr', 't61str', 'unistr', 'utf8str', 'videostr'
-];
+] as const;
 
 // Public methods list
 export const methods = [
   'key', 'obj', 'use', 'optional', 'explicit', 'implicit', 'def', 'choice',
-  'any', 'contains'
-].concat(tags);
+  'any', 'contains', ...tags,
+] as const;
 
 // Overrided methods list
 export const overrided = [
@@ -25,7 +25,7 @@ export const overrided = [
 
   '_encodeComposite', '_encodeStr', '_encodeObjid', '_encodeTime',
   '_encodeNull', '_encodeInt', '_encodeBool'
-];
+] as const;
 
 export const stateProps: (keyof NodeState)[] = [
   'enc', 'parent', 'children', 'tag', 'args', 'reverseArgs', 'choice',
@@ -53,6 +53,36 @@ export interface NodeState {
   implicit: any;
   contains: any;
   defaultBuffer: any;
+}
+
+export interface Node {
+  // These are auto implemented in the ctor
+  seq(..._args: any): this;
+  seqof(..._args: any): this;
+  set(..._args: any): this;
+  setof(..._args: any): this;
+  objid(..._args: any): this;
+  bool(..._args: any): this;
+  gentime(..._args: any): this;
+  utctime(..._args: any): this;
+  null_(..._args: any): this;
+  enum(..._args: any): this;
+  int(..._args: any): this;
+  objDesc(..._args: any): this;
+  bitstr(..._args: any): this;
+  bmpstr(..._args: any): this;
+  charstr(..._args: any): this;
+  genstr(..._args: any): this;
+  graphstr(..._args: any): this;
+  ia5str(..._args: any): this;
+  iso646str(..._args: any): this;
+  numstr(..._args: any): this;
+  octstr(..._args: any): this;
+  printstr(..._args: any): this;
+  t61str(..._args: any): this;
+  unistr(..._args: any): this;
+  utf8str(..._args: any): this;
+  videostr(..._args: any): this;
 }
 
 export abstract class Node {
@@ -175,7 +205,7 @@ export abstract class Node {
     }
   }
   
-  use(item: any) {
+  use(item: any): this {
     assert(item);
     const state = this._baseState;
   
@@ -185,7 +215,7 @@ export abstract class Node {
     return this;
   }
   
-  optional() {
+  optional(): this {
     const state = this._baseState;
   
     state.optional = true;
@@ -193,7 +223,7 @@ export abstract class Node {
     return this;
   }
   
-  def(val: any) {
+  def(val: any): this {
     const state = this._baseState;
   
     assert(state['default'] === null);
@@ -203,7 +233,7 @@ export abstract class Node {
     return this;
   }
   
-  explicit(num: any) {
+  explicit(num: any): this {
     const state = this._baseState;
   
     assert(state.explicit === null && state.implicit === null);
@@ -212,7 +242,7 @@ export abstract class Node {
     return this;
   }
   
-  implicit(num: any) {
+  implicit(num: any): this {
     const state = this._baseState;
   
     assert(state.explicit === null && state.implicit === null);
@@ -221,9 +251,8 @@ export abstract class Node {
     return this;
   }
   
-  obj() {
+  obj(...args: any): this {
     const state = this._baseState;
-    const args = Array.prototype.slice.call(arguments);
   
     state.obj = true;
   
@@ -233,7 +262,7 @@ export abstract class Node {
     return this;
   }
   
-  key(newKey: any) {
+  key(newKey: any): this {
     const state = this._baseState;
   
     assert(state.key === null);
@@ -242,7 +271,7 @@ export abstract class Node {
     return this;
   }
   
-  any() {
+  any(): this {
     const state = this._baseState;
   
     state.any = true;
@@ -250,7 +279,7 @@ export abstract class Node {
     return this;
   }
   
-  choice(obj: any) {
+  choice(obj: any): this {
     const state = this._baseState;
   
     assert(state.choice === null);
@@ -260,7 +289,7 @@ export abstract class Node {
     return this;
   }
   
-  contains(item: any) {
+  contains(item: any): this {
     const state = this._baseState;
   
     assert(state.use === null);
