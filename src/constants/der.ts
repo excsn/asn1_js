@@ -8,7 +8,7 @@ export const tagClass: Record<number, string> = {
   3: 'private'
 };
 
-export const tagClassByName = reverse(exports.tagClass);
+export const tagClassByName = reverse(tagClass);
 
 export const tag: Record<number, string>  = {
   0x00: 'end',
@@ -42,4 +42,4 @@ export const tag: Record<number, string>  = {
   0x1e: 'bmpstr'
 };
 
-export const tagByName = reverse(exports.tag);
+export const tagByName = reverse(tag);
