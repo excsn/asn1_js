@@ -2,7 +2,7 @@
 
 ASN.1 DER Encoder/Decoder and DSL.
 
-Fork of "asn1.js" ported to typescript.
+Fork of "asn1.js", by Fedor Indutny, ported to typescript.
 
 ## Example
 
@@ -81,7 +81,7 @@ console.log(human);
 
 This software is licensed under the MIT License.
 
-Copyright Fedor Indutny, 2017.
+Copyright Excerion Sun, 2022.
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the
