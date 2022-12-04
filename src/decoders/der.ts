@@ -1,3 +1,5 @@
+import {toBigIntBE} from "bigint-buffer";
+
 import { Entity } from "../api.js";
 import { DecoderBuffer, DecoderBufferSaveState, DecoderError } from "../base/buffer.js";
 import { Node, NodeState, stateProps } from "../base/node.js";
@@ -472,7 +474,7 @@ export class DERNode extends Node {
   _decodeInt(buffer: DecoderBuffer, values: Record<string, any>) {
     // Bigint, return as it is (assume big endian)
     const raw = buffer.raw();
-    let res = raw.readBigInt64BE();
+    let res = toBigIntBE(raw);
   
     if (values)
       res = values[res.toString(10)] || res;
